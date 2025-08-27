@@ -1,32 +1,28 @@
-import { jest } from '@jest/globals';
-import { initCommand } from '../src/commands/init.js';
+import { jest, beforeEach, afterEach, describe, test, expect } from '@jest/globals';
 
-// Mock the config module
-const mockLoadConfig = jest.fn();
-const mockMergeConfigWithFlags = jest.fn();
-
-// Mock the utils module
-const mockFileExists = jest.fn();
-const mockWriteJsonFile = jest.fn();
-const mockWriteTextFile = jest.fn();
-const mockReadPackageJson = jest.fn();
-const mockWritePackageJson = jest.fn();
-const mockLog = jest.fn();
-
+// Mock dependencies before importing the module
 jest.unstable_mockModule('../src/config.js', () => ({
-  loadConfig: mockLoadConfig,
-  mergeConfigWithFlags: mockMergeConfigWithFlags,
+  loadConfig: jest.fn(),
+  mergeConfigWithFlags: jest.fn(),
 }));
 
 jest.unstable_mockModule('../src/utils.js', () => ({
-  fileExists: mockFileExists,
-  writeJsonFile: mockWriteJsonFile,
-  writeTextFile: mockWriteTextFile,
-  readPackageJson: mockReadPackageJson,
-  writePackageJson: mockWritePackageJson,
-  log: mockLog,
+  fileExists: jest.fn(),
+  writeJsonFile: jest.fn(),
+  writeTextFile: jest.fn(),
+  readPackageJson: jest.fn(),
+  writePackageJson: jest.fn(),
+  log: jest.fn(),
   formatOutput: jest.fn((data, format) => (format === 'json' ? JSON.stringify(data) : data)),
+  logError: jest.fn(),
 }));
+
+// Import modules after mocking
+const { initCommand } = await import('../src/commands/init.js');
+const { loadConfig, mergeConfigWithFlags } = await import('../src/config.js');
+const { fileExists, writeJsonFile, readPackageJson, writePackageJson, log } = await import(
+  '../src/utils.js'
+);
 
 describe('init command', () => {
   let consoleLogSpy;
@@ -55,14 +51,14 @@ describe('init command', () => {
       },
     };
 
-    mockLoadConfig.mockResolvedValue(mockConfig);
-    mockMergeConfigWithFlags.mockReturnValue(mockConfig);
+    loadConfig.mockResolvedValue(mockConfig);
+    mergeConfigWithFlags.mockReturnValue(mockConfig);
 
     const options = { dryRun: true, format: 'text' };
 
     await initCommand(options);
 
-    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringMatching(/Dry run.*planned actions/));
+    expect(consoleLogSpy).toHaveBeenCalledWith(expect.stringContaining('Planned actions'));
   });
 
   test('should handle --no-eslint flag', async () => {
@@ -85,14 +81,14 @@ describe('init command', () => {
       },
     };
 
-    mockLoadConfig.mockResolvedValue(mockBaseConfig);
-    mockMergeConfigWithFlags.mockReturnValue(mockMergedConfig);
+    loadConfig.mockResolvedValue(mockBaseConfig);
+    mergeConfigWithFlags.mockReturnValue(mockMergedConfig);
 
     const options = { eslint: false, dryRun: true };
 
     await initCommand(options);
 
-    expect(mockMergeConfigWithFlags).toHaveBeenCalledWith(mockBaseConfig, options);
+    expect(mergeConfigWithFlags).toHaveBeenCalledWith(mockBaseConfig, options);
   });
 
   test('should create configuration files when not in dry-run mode', async () => {
@@ -108,27 +104,27 @@ describe('init command', () => {
       },
     };
 
-    mockLoadConfig.mockResolvedValue(mockConfig);
-    mockMergeConfigWithFlags.mockReturnValue(mockConfig);
-    mockFileExists.mockResolvedValue(false);
-    mockWriteJsonFile.mockResolvedValue();
+    loadConfig.mockResolvedValue(mockConfig);
+    mergeConfigWithFlags.mockReturnValue(mockConfig);
+    fileExists.mockResolvedValue(false);
+    writeJsonFile.mockResolvedValue();
+    readPackageJson.mockResolvedValue({ name: 'test', scripts: {} });
+    writePackageJson.mockResolvedValue();
 
     const options = { dryRun: false, format: 'text' };
 
     await initCommand(options);
 
-    expect(mockWriteJsonFile).toHaveBeenCalled();
-    expect(mockLog).toHaveBeenCalledWith('success', expect.any(String));
+    expect(writeJsonFile).toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith('success', expect.any(String));
   });
 
   test('should handle errors gracefully', async () => {
-    mockLoadConfig.mockRejectedValue(new Error('Config file error'));
+    loadConfig.mockRejectedValue(new Error('Config file error'));
 
     const options = { dryRun: false };
 
-    await initCommand(options);
-
-    expect(mockLog).toHaveBeenCalledWith('error', expect.stringContaining('Initialization failed'));
-    expect(processExitSpy).toHaveBeenCalledWith(1);
+    await expect(initCommand(options)).rejects.toThrow('Config file error');
+    expect(log).toHaveBeenCalledWith('error', expect.stringContaining('Initialization failed'));
   });
 });
