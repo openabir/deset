@@ -1,5 +1,6 @@
 import path from 'path';
 import chalk from 'chalk';
+import ora from 'ora';
 import { loadConfig, mergeConfigWithFlags } from '../config.js';
 import {
   fileExists,
@@ -9,7 +10,27 @@ import {
   writePackageJson,
   log,
   formatOutput,
+  logError,
 } from '../utils.js';
+import { validateOptions } from '../error-handler.js';
+
+// Validation schema for init command options
+const INIT_OPTIONS_SCHEMA = {
+  types: {
+    'dry-run': 'boolean',
+    format: 'string',
+    eslint: 'boolean',
+    prettier: 'boolean',
+    husky: 'boolean',
+    'lint-staged': 'boolean',
+    dependabot: 'boolean',
+    audit: 'boolean',
+    'stale-check': 'boolean',
+  },
+  enum: {
+    format: ['text', 'json'],
+  },
+};
 
 /**
  * ESLint configuration
@@ -72,6 +93,18 @@ npx lint-staged
  * @param {Object} options - Command options
  */
 export async function initCommand(options) {
+  // Validate options first
+  const validationErrors = validateOptions(options, INIT_OPTIONS_SCHEMA);
+  if (validationErrors.length > 0) {
+    validationErrors.forEach((error) => {
+      log('error', error.message);
+    });
+    throw new Error('Invalid command options. Check the command syntax and try again.');
+  }
+
+  const spinner = ora('Initializing developer environment...').start();
+  const startTime = Date.now();
+
   try {
     // Load and merge configuration
     const baseConfig = await loadConfig();
@@ -83,6 +116,7 @@ export async function initCommand(options) {
       warnings: [],
       errors: [],
       skipped: [],
+      timing: {},
     };
 
     // Plan actions based on configuration
@@ -131,6 +165,8 @@ export async function initCommand(options) {
 
     // Show planned actions if dry-run
     if (options.dryRun) {
+      spinner.succeed(chalk.blue('Dry run completed - showing planned actions'));
+
       if (options.format === 'json') {
         console.log(
           formatOutput(
@@ -146,7 +182,7 @@ export async function initCommand(options) {
           )
         );
       } else {
-        console.log(chalk.cyan('Dry run - planned actions:'));
+        console.log(chalk.cyan('\nPlanned actions:'));
         actions.forEach((action) => {
           console.log(chalk.gray('-'), action.name);
           if (action.file) {
@@ -157,8 +193,11 @@ export async function initCommand(options) {
       return;
     }
 
-    // Execute actions
-    for (const action of actions) {
+    // Execute actions with progress indication
+    for (let i = 0; i < actions.length; i++) {
+      const action = actions[i];
+      spinner.text = `${action.name} (${i + 1}/${actions.length})`;
+
       try {
         switch (action.type) {
           case 'eslint':
@@ -194,24 +233,53 @@ export async function initCommand(options) {
       }
     }
 
+    const endTime = Date.now();
+    results.timing.total = endTime - startTime;
+
+    spinner.succeed(chalk.green('✓ Developer environment initialized successfully'));
+
     // Output results
     if (options.format === 'json') {
       console.log(formatOutput(results, 'json'));
     } else {
       console.log(
-        chalk.green(`\n✓ Initialization complete! ${results.success.length} actions completed.`)
+        chalk.green(
+          `\n✓ Initialization complete! ${results.success.length} actions completed in ${results.timing.total}ms.`
+        )
       );
+
       if (results.warnings.length > 0) {
         console.log(chalk.yellow(`⚠ ${results.warnings.length} warnings`));
       }
+
       if (results.errors.length > 0) {
         console.log(chalk.red(`✗ ${results.errors.length} errors`));
-        process.exit(1);
+        results.errors.forEach((error) => {
+          console.log(chalk.red(`  - ${error.action}: ${error.error}`));
+        });
+      }
+
+      // Show next steps
+      if (results.success.length > 0) {
+        console.log(chalk.cyan('\nNext steps:'));
+        console.log(chalk.cyan('  1. Run "npm install" to install dev dependencies'));
+        console.log(chalk.cyan('  2. Run "devset check" to verify your setup'));
+        console.log(chalk.cyan('  3. Commit your changes to git'));
       }
     }
+
+    // Exit with error code if there were errors
+    if (results.errors.length > 0) {
+      throw new Error(
+        `Initialization completed with ${results.errors.length} errors. Review the error details above and fix any issues.`
+      );
+    }
   } catch (error) {
-    log('error', `Initialization failed: ${error.message}`);
-    process.exit(1);
+    spinner.fail(chalk.red('✗ Failed to initialize developer environment'));
+    if (error.message && !error.message.includes('completed with')) {
+      log('error', `Initialization failed: ${error.message}`);
+    }
+    throw error;
   }
 }
 
@@ -236,16 +304,17 @@ async function executeConfigAction(action) {
 async function executeLintStagedAction() {
   const packageJson = await readPackageJson();
 
-  if (!packageJson['lint-staged']) {
-    packageJson['lint-staged'] = {
-      '*.{js,jsx,ts,tsx}': ['eslint --fix', 'prettier --write'],
-      '*.{json,css,md}': ['prettier --write'],
-    };
-
-    await writePackageJson(packageJson);
-  } else {
+  if (packageJson['lint-staged']) {
     log('warning', 'lint-staged already configured in package.json');
+    return;
   }
+
+  packageJson['lint-staged'] = {
+    '*.{js,jsx,ts,tsx}': ['eslint --fix', 'prettier --write'],
+    '*.{json,css,md}': ['prettier --write'],
+  };
+
+  await writePackageJson(packageJson);
 }
 
 /**
@@ -268,7 +337,10 @@ async function executeHuskyAction(action) {
       const { chmod } = await import('fs/promises');
       await chmod(filePath, '755');
     } catch (error) {
-      log('warning', 'Could not make pre-commit hook executable');
+      log(
+        'warning',
+        'Could not make pre-commit hook executable - you may need to run: chmod +x .husky/pre-commit'
+      );
     }
   }
 }

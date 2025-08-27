@@ -46,7 +46,11 @@ export async function checkCommand(options) {
 
     // Run audit check
     if (config.features.audit) {
-      const auditProgress = new ProgressIndicator('Running security audit');
+      const auditProgress = new ProgressIndicator(
+        'Running security audit',
+        null,
+        options.format === 'json'
+      );
       try {
         auditProgress.start();
         results.audit = await runAuditCheck();
@@ -73,7 +77,11 @@ export async function checkCommand(options) {
     }
 
     // Run outdated check
-    const outdatedProgress = new ProgressIndicator('Checking for outdated packages');
+    const outdatedProgress = new ProgressIndicator(
+      'Checking for outdated packages',
+      null,
+      options.format === 'json'
+    );
     try {
       outdatedProgress.start();
       results.outdated = await runOutdatedCheck();
@@ -95,7 +103,11 @@ export async function checkCommand(options) {
 
     // Run stale package check
     if (config.features.staleCheck) {
-      const staleProgress = new ProgressIndicator('Checking for stale packages');
+      const staleProgress = new ProgressIndicator(
+        'Checking for stale packages',
+        null,
+        options.format === 'json'
+      );
       try {
         staleProgress.start();
         results.stale = await runStaleCheck();
@@ -104,7 +116,11 @@ export async function checkCommand(options) {
 
         // Analyze stale packages for detailed recommendations
         if (results.stale.critical.length > 0 || results.stale.warnings.length > 0) {
-          const analysisProgress = new ProgressIndicator('Analyzing stale packages');
+          const analysisProgress = new ProgressIndicator(
+            'Analyzing stale packages',
+            null,
+            options.format === 'json'
+          );
           analysisProgress.start();
           results.staleAnalysis = await analyzeStalePackages([
             ...results.stale.critical,
