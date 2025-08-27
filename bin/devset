@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import chalk from 'chalk';
+import { initCommand } from '../src/commands/init.js';
+import { checkCommand } from '../src/commands/check.js';
+import { configCommand } from '../src/commands/config.js';
+
+const program = new Command();
+
+program
+  .name('devset')
+  .description('CLI tool to automate developer environment setup and project checks')
+  .version('1.0.0')
+  .addHelpText(
+    'after',
+    `
+Common Usage:
+  $ devset init                   Set up a new project with best practices
+  $ devset check                  Run health checks on your project  
+  $ devset i --dry-run           Preview initialization changes
+  $ devset c --no-interactive    Run checks in CI/CD pipelines
+
+For more detailed examples, use:
+  $ devset init --help
+  $ devset check --help
+  `
+  );
+
+// Init command
+program
+  .command('init')
+  .alias('i')
+  .description('Initialize developer environment with configuration files')
+  .option('--dry-run', 'Show planned actions without executing them')
+  .option('--format <type>', 'Output format (json)', 'text')
+  .option('--no-eslint', 'Disable ESLint setup')
+  .option('--no-prettier', 'Disable Prettier setup')
+  .option('--no-husky', 'Disable Husky setup')
+  .option('--no-lint-staged', 'Disable lint-staged setup')
+  .option('--no-dependabot', 'Disable Dependabot setup')
+  .option('--no-audit', 'Disable audit checks')
+  .option('--no-stale-check', 'Disable stale package checks')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  $ devset init                    Initialize with all features enabled
+  $ devset i --dry-run            Preview what would be created
+  $ devset init --no-husky        Initialize without Git hooks
+  $ devset init --format json     Output results in JSON format
+  $ devset init --no-prettier --no-eslint  Initialize without code formatting
+  `
+  )
+  .action(initCommand);
+
+// Check command
+program
+  .command('check')
+  .alias('c')
+  .description('Run various project health checks')
+  .option('--changed-only', 'Only check changed files (via git diff)')
+  .option('--format <type>', 'Output format (json)', 'text')
+  .option('--no-interactive', 'Disable interactive prompts')
+  .option('--no-audit', 'Disable audit checks')
+  .option('--no-stale-check', 'Disable stale package checks')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  $ devset check                   Run all health checks interactively
+  $ devset c --no-interactive     Run checks without prompts (CI-friendly)
+  $ devset check --format json    Output results in JSON format
+  $ devset check --changed-only   Only check files changed in git
+  $ devset check --no-audit       Skip security audit checks
+  $ devset check --no-stale-check Skip stale package analysis
+  `
+  )
+  .action(checkCommand);
+
+// Config command
+program
+  .command('config')
+  .description('Interactive configuration wizard')
+  .option('--reset', 'Reset configuration to defaults')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  $ devset config                 Run interactive configuration wizard
+  $ devset config --reset         Reset to default configuration
+  `
+  )
+  .action(configCommand);
+
+// Parse command line arguments
+try {
+  await program.parseAsync(process.argv);
+} catch (error) {
+  // Don't show error for help or version commands
+  if (error.code === 'commander.help' || error.code === 'commander.version') {
+    process.exit(0);
+  }
+  console.error(chalk.red('Error:'), error.message);
+  process.exit(1);
+}
