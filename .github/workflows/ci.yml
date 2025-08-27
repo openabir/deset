@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test on Node.js ${{ matrix.node-version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Run tests
+        run: npm test
+
+      - name: Test CLI functionality
+        run: |
+          node bin/devset --version
+          node bin/devset --help
+          node bin/devset init --dry-run
+          node bin/devset check --no-interactive --format json
+
+      - name: Upload coverage reports (Ubuntu + Node 18 only)
+        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '18.x'
+        run: npm run test:coverage
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test package build
+        run: npm pack
+
+      - name: Test global installation from tarball
+        run: |
+          TARBALL=$(ls *.tgz)
+          npm install -g $TARBALL
+          devset --version
+          devset --help
