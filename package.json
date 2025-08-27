@@ -29,11 +29,15 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "^5.3.0",
-    "commander": "^11.1.0"
+    "commander": "^11.1.0",
+    "ora": "^8.2.0"
   },
   "devDependencies": {
     "eslint": "^8.57.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^16.1.5",
     "prettier": "^3.2.5"
   },
   "engines": {
@@ -41,9 +45,29 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "globals": {
+      "__DEV__": true
+    },
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
-    }
+    },
+    "transform": {},
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ],
+    "setupFilesAfterEnv": [],
+    "testTimeout": 10000
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
