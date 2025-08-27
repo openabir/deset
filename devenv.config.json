@@ -1,0 +1,16 @@
+{
+  "version": "1.0.0",
+  "features": {
+    "eslint": true,
+    "prettier": true,
+    "husky": true,
+    "lintStaged": true,
+    "dependabot": true,
+    "audit": true,
+    "staleCheck": true,
+    "interactive": true
+  },
+  "defaults": {
+    "outputFormat": "text"
+  }
+}
