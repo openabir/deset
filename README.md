@@ -341,13 +341,14 @@ npm run lint:fix
 ## File Structure
 
 ```
-devenv-cli/
+@oas/devset/
 ├── bin/
-│   └── dev-env              # CLI entrypoint
+│   └── devset               # CLI entrypoint
 ├── src/
 │   ├── commands/
 │   │   ├── init.js          # Init command implementation
-│   │   └── check.js         # Check command implementation
+│   │   ├── check.js         # Check command implementation
+│   │   └── config.js        # Config wizard implementation
 │   ├── config.js            # Configuration management
 │   └── utils.js             # Shared utilities
 ├── tests/

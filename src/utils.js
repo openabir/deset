@@ -173,7 +173,7 @@ export function logError(error, context = {}) {
  * Progress indicator utilities
  */
 export class ProgressIndicator {
-  constructor(message, total = null) {
+  constructor(message, total = null, silent = false) {
     this.message = message;
     this.total = total;
     this.current = 0;
@@ -181,9 +181,12 @@ export class ProgressIndicator {
     this.spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
     this.spinnerIndex = 0;
     this.interval = null;
+    this.silent = silent;
   }
 
   start() {
+    if (this.silent) return this;
+
     if (this.total) {
       process.stdout.write(`${this.message} [0/${this.total}] 0%`);
     } else {
@@ -196,6 +199,8 @@ export class ProgressIndicator {
   }
 
   update(current = null) {
+    if (this.silent) return this;
+
     if (this.total && current !== null) {
       this.current = current;
       const percentage = Math.round((current / this.total) * 100);
@@ -210,6 +215,8 @@ export class ProgressIndicator {
     if (this.interval) {
       clearInterval(this.interval);
     }
+    if (this.silent) return this;
+
     const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
     const finalMessage = message || 'Complete';
     process.stdout.write(`\r✓ ${finalMessage} (${elapsed}s)\n`);
@@ -220,6 +227,8 @@ export class ProgressIndicator {
     if (this.interval) {
       clearInterval(this.interval);
     }
+    if (this.silent) return this;
+
     const finalMessage = message || 'Failed';
     process.stdout.write(`\r✗ ${finalMessage}\n`);
     return this;

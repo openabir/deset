@@ -1,26 +1,122 @@
 # @oas/devset Project Instructions
 
 This is a Node.js CLI project that automates developer environment setup and project checks.
+## Architecture Overview
 
-## Project Overview
+**Core Components:**
 
-- Name: @oas/devset
-- Purpose: Automate developer setup with consistent configs and checks
-- Language: Node.js (ES Modules)
-- CLI Framework: Commander.js
-- Output styling: chalk
-- Testing: Jest
-- Package manager: npm
+- `bin/devset` - CLI entry point with Commander.js, includes global error handling and environment validation
+- `src/commands/` - Command implementations (init, check, config) following action pattern
+- `src/utils.js` - Shared utilities with 900+ lines including package analysis engine
+- `src/config.js` - Configuration system with merge precedence: CLI flags > devenv.config.json > defaults
+- `src/error-handler.js` - Centralized error handling with contextual suggestions
+- `src/performance.js` - Performance monitoring utilities with timing metrics
+- `src/validators.js` - Package.json and naming validation
 
-## Current Features
+## Critical Development Patterns
 
-- `init` command: Sets up development environment with configurable features
-- `check` command: Runs various project health checks with stale package analysis
-- Configuration through devenv.config.json
-- Support for feature toggles and command-line flags
-- Interactive stale package management with alternatives database
+### ES Module + Jest Testing
 
-## Developer Experience Enhancement Plan
+Use `jest.unstable_mockModule()` for mocking ES modules in tests:
+
+```javascript
+jest.unstable_mockModule('../src/utils.js', () => ({
+  fileExists: jest.fn(),
+  analyzeStalePackages: jest.fn(),
+}));
+const { initCommand } = await import('../src/commands/init.js');
+```
+
+### Configuration Merging
+
+Follow the 3-tier config system: `mergeConfigWithFlags(config, options)` handles CLI flags > config file > defaults.
+
+### Command Structure
+
+All commands follow this pattern:
+
+1. Load and merge config
+2. Validate options
+3. Execute with progress indicators (ora spinners)
+4. Handle both text and JSON output formats
+5. Comprehensive error handling with `handleCommandError()`
+
+### Package Analysis Engine
+
+The `analyzeStalePackages()` function categorizes packages into safe/needsAttention/critical based on age and built-in alternatives database. When adding package alternatives, update the embedded database in utils.js.
+
+## Critical Development Workflows
+
+### Testing
+
+```bash
+npm test                    # Run Jest with ES module experimental flags
+npm run test:coverage       # Coverage reports
+npm run test:watch         # Watch mode
+```
+
+### Local Development
+
+```bash
+node bin/devset init --dry-run     # Test init without changes
+node bin/devset check --no-interactive  # Test check in CI mode
+```
+
+### Integration Testing
+
+Use `tests/integration.test.js` pattern with `createTempDir()` helper for filesystem tests. All CLI tests run with `NODE_OPTIONS: '--experimental-vm-modules'`.
+
+## Project-Specific Conventions
+
+### Error Handling
+
+- Use `logError(error, context)` with structured context objects including suggestion, command, docs
+- Implement `withErrorHandling(fn, context)` wrapper for async operations
+- All commands must handle both interactive and CI modes (`--no-interactive`)
+
+### Output Formatting
+
+- Support both text and JSON output via `formatOutput(data, format)`
+- Use chalk for colored output with semantic colors (green=success, yellow=warning, red=error)
+- Progress indicators use ora with descriptive text updates
+
+### Package Management
+
+- Interactive package updates with user choice (all vs selective)
+- Automatic config file updates (ESLint, Jest, Prettier) based on package versions
+- Stale package categorization with built-in alternatives database
+
+### CLI Design Principles
+
+- All commands have aliases (init→i, check→c)
+- Extensive help text with examples using `.addHelpText('after', ...)`
+- Environment validation before command execution
+- Graceful handling of git/non-git repositories
+
+## Integration Points
+
+- **npm/yarn**: Package analysis via `npm list`, `npm audit`, `npm outdated`
+- **Git**: File change detection with `git diff --name-only`
+- **Filesystem**: File template creation with atomic operations
+- **Package registries**: Real-time package info fetching for alternatives
+
+## Common Tasks
+
+### Adding New Commands
+
+1. Create command file in `src/commands/`
+2. Add to `bin/devset` with proper error handling
+3. Follow the config loading → validation → execution → output pattern
+4. Add both unit tests (mocked) and integration tests
+
+### Extending Package Analysis
+
+Add entries to the alternatives database in `utils.js` and update the categorization logic in `analyzeStalePackages()`.
+
+### Adding Configuration Options
+
+Update `DEFAULT_CONFIG` in `config.js` and add corresponding CLI flags with `--no-*` pattern in command definitions.
+
 
 ### Phase 1: Core UX Improvements (HIGH PRIORITY)
 
@@ -136,7 +232,3 @@ This is a Node.js CLI project that automates developer environment setup and pro
 - [ ] Feature 3.1: Plugin System
 - [ ] Feature 3.2: Statistics & Tracking
 - [ ] Feature 3.3: Shell Completion
-
-## Current Focus
-
-Starting with Feature 1.1: Enhanced Error Handling & Feedback
