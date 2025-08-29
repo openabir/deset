@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.join(__dirname, '..');
-const CLI_PATH = path.join(ROOT_DIR, 'bin', 'devset');
+const CLI_PATH = path.join(ROOT_DIR, 'bin', 'deset');
 
 // Helper function to run CLI commands
 function runCLI(args = '', options = {}) {
@@ -69,20 +69,19 @@ describe('CLI Integration Tests', () => {
     }
   });
 
-  describe('devset --help', () => {
+  describe('deset --help', () => {
     test('should show help information', () => {
       const output = runCLI('--help');
 
-      expect(output).toContain(
-        'CLI tool to automate developer environment setup and project checks'
-      );
+      expect(output).toContain('OAS Developer Environment Setup Tool');
+      expect(output).toContain('Automate environment setup');
       expect(output).toContain('init');
       expect(output).toContain('check');
       expect(output).toContain('config');
     });
   });
 
-  describe('devset --version', () => {
+  describe('deset --version', () => {
     test('should show version information', () => {
       const output = runCLI('--version');
 
@@ -90,7 +89,7 @@ describe('CLI Integration Tests', () => {
     });
   });
 
-  describe('devset init', () => {
+  describe('deset init', () => {
     test('should show dry-run output correctly', () => {
       const output = runCLI('init --dry-run', { cwd: tempDir });
 
@@ -128,7 +127,7 @@ describe('CLI Integration Tests', () => {
     });
   });
 
-  describe('devset check', () => {
+  describe('deset check', () => {
     test('should run basic health checks', () => {
       const output = runCLI('check --no-interactive', { cwd: tempDir });
 
@@ -166,7 +165,7 @@ describe('CLI Integration Tests', () => {
     });
   });
 
-  describe('devset config', () => {
+  describe('deset config', () => {
     test('should handle --reset flag', () => {
       const output = runCLI('config --reset', {
         cwd: tempDir,
