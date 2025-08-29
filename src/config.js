@@ -14,12 +14,12 @@ export const DEFAULT_CONFIG = {
 };
 
 /**
- * Load configuration from devenv.config.json with fallback to defaults
+ * Load configuration from deset.config.json with fallback to defaults
  * @returns {Promise<Object>} Configuration object
  */
 export async function loadConfig() {
   try {
-    const configPath = path.join(process.cwd(), 'devenv.config.json');
+    const configPath = path.join(process.cwd(), 'deset.config.json');
     const configFile = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(configFile);
 
