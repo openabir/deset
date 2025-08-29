@@ -10,7 +10,6 @@ import {
   writePackageJson,
   log,
   formatOutput,
-  logError,
 } from '../utils.js';
 import { validateOptions } from '../error-handler.js';
 
@@ -336,7 +335,7 @@ async function executeHuskyAction(action) {
     try {
       const { chmod } = await import('fs/promises');
       await chmod(filePath, '755');
-    } catch (error) {
+    } catch {
       log(
         'warning',
         'Could not make pre-commit hook executable - you may need to run: chmod +x .husky/pre-commit'

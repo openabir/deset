@@ -6,6 +6,16 @@
 export function validatePackageJson(packageJson) {
   const issues = [];
 
+  // Handle null or invalid input
+  if (!packageJson || typeof packageJson !== 'object') {
+    issues.push({
+      type: 'error',
+      message: 'Package.json is not a valid object',
+      fix: 'Ensure package.json contains valid JSON object',
+    });
+    return issues;
+  }
+
   // Check required fields
   const required = ['name', 'version', 'description'];
   required.forEach((field) => {
@@ -103,7 +113,7 @@ export function validatePackageName(name) {
     });
   }
 
-  if (/[^a-z0-9\-_@\/]/.test(name)) {
+  if (/[^a-z0-9\-_@/]/.test(name)) {
     issues.push({
       type: 'error',
       message: 'Package name contains invalid characters',

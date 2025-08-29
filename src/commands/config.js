@@ -1,14 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import chalk from 'chalk';
-import {
-  askYesNo,
-  askMultipleChoice,
-  fileExists,
-  log,
-  logError,
-  ProgressIndicator,
-} from '../utils.js';
+import { askYesNo, askMultipleChoice, fileExists, logError, ProgressIndicator } from '../utils.js';
 
 /**
  * Interactive configuration wizard

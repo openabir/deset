@@ -52,7 +52,7 @@ export async function readPackageJson() {
     const packagePath = path.join(process.cwd(), 'package.json');
     const content = await fs.readFile(packagePath, 'utf-8');
     return JSON.parse(content);
-  } catch (error) {
+  } catch {
     throw new Error(
       'Could not read package.json. Make sure you are in a Node.js project directory.'
     );
@@ -92,7 +92,7 @@ export async function getChangedFiles() {
       .trim()
       .split('\n')
       .filter((file) => file.length > 0);
-  } catch (error) {
+  } catch {
     console.warn(chalk.yellow('Warning: Could not get changed files via git diff'));
     return [];
   }

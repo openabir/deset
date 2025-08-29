@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-const DEFAULT_CONFIG = {
+export const DEFAULT_CONFIG = {
   features: {
     eslint: true,
     prettier: true,
@@ -30,7 +30,7 @@ export async function loadConfig() {
         ...config.features,
       },
     };
-  } catch (error) {
+  } catch {
     // If config file doesn't exist or is invalid, use defaults
     return DEFAULT_CONFIG;
   }
@@ -45,8 +45,13 @@ export async function loadConfig() {
  */
 export function mergeConfigWithFlags(config, options) {
   const mergedConfig = {
-    features: { ...config.features },
+    features: { ...(config?.features || {}) },
   };
+
+  // If no options provided, return the config as is
+  if (!options) {
+    return config || DEFAULT_CONFIG;
+  }
 
   // Override with command line flags (--no-* flags)
   if (options.eslint === false) mergedConfig.features.eslint = false;
