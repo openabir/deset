@@ -51,7 +51,7 @@ async function createTempDir() {
 async function cleanupTempDir(tempDir) {
   try {
     await fs.rm(tempDir, { recursive: true, force: true });
-  } catch (error) {
+  } catch {
     // Ignore cleanup errors
   }
 }

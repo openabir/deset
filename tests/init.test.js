@@ -26,12 +26,10 @@ const { fileExists, writeJsonFile, readPackageJson, writePackageJson, log } = aw
 
 describe('init command', () => {
   let consoleLogSpy;
-  let processExitSpy;
 
   beforeEach(() => {
     jest.clearAllMocks();
     consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    processExitSpy = jest.spyOn(process, 'exit').mockImplementation(() => {});
   });
 
   afterEach(() => {
