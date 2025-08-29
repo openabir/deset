@@ -72,6 +72,8 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "maxWorkers": "50%",
+    "cache": true,
     "globals": {
       "__DEV__": true
     },
@@ -85,16 +87,17 @@
     ],
     "coverageDirectory": "coverage",
     "coverageReporters": [
-      "text",
-      "lcov",
-      "html"
+      "text-summary",
+      "lcov"
     ],
     "testMatch": [
       "**/__tests__/**/*.js",
       "**/?(*.)+(spec|test).js"
     ],
     "setupFilesAfterEnv": [],
-    "testTimeout": 10000
+    "testTimeout": 8000,
+    "verbose": false,
+    "silent": true
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
