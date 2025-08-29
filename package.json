@@ -1,14 +1,22 @@
 {
-  "name": "@oas/devset",
+  "name": "@oas/deset",
   "version": "1.0.0",
-  "description": "A CLI tool to automate developer environment setup and project checks",
+  "description": "A powerful CLI tool to automate developer environment setup and comprehensive project health checks",
   "type": "module",
   "main": "./src/index.js",
   "bin": {
-    "devset": "./bin/devset"
+    "deset": "./bin/deset"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "homepage": "https://github.com/openabir/oas-devset#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openabir/oas-devset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/openabir/oas-devset/issues"
   },
   "scripts": {
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
@@ -16,16 +24,34 @@
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "lint": "eslint src/ tests/",
     "lint:fix": "eslint src/ tests/ --fix",
-    "start": "node ./bin/devset"
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "start": "node ./bin/deset",
+    "dev": "node ./bin/deset",
+    "prepublishOnly": "npm run test && npm run lint",
+    "preversion": "npm run test && npm run lint",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "cli",
     "developer-tools",
+    "devtools",
     "environment-setup",
     "automation",
-    "project-checks"
+    "project-checks",
+    "package-management",
+    "security-audit",
+    "dependency-management",
+    "eslint",
+    "prettier",
+    "husky",
+    "oas"
   ],
-  "author": "DevEnv-CLI Team",
+  "author": {
+    "name": "OAS",
+    "email": "contact@oas.dev",
+    "url": "https://github.com/openabir"
+  },
   "license": "MIT",
   "dependencies": {
     "@eslint/js": "^9.34.0",

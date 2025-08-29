@@ -1,6 +1,33 @@
-# @oas/devset
+# @oas/deset
 
-A production-ready CLI tool that automates developer environment setup and project health checks.
+[![npm version](https://badge.fury.io/js/%40oas%2Fdeset.svg)](https://badge.fury.io/js/%40oas%2Fdeset)
+[![Node.js CI](https://github.com/openabir/oas-deset/workflows/Node.js%20CI/badge.svg)](https://github.com/openabir/oas-deset/actions)
+[![codecov](https://codecov.io/gh/openabir/oas-deset/branch/main/graph/badge.svg)](https:## File Structure
+
+````
+@oas/deset/
+├── bin/
+│   └── deset               # CLI entrypoint
+├── src/
+│   ├── commands/
+│   │   ├── init.js          # Init command implementation
+│   │   ├── check.js         # Check command implementation
+│   │   └── config.js        # Config wizard implementation
+│   ├── config.js            # Configuration management
+│   ├── utils.js             # Shared utilities
+│   ├── error-handler.js     # Error handling utilities
+│   ├── performance.js       # Performance monitoring
+│   └── validators.js        # Input validation
+├── tests/
+│   ├── init.test.js         # Init command tests
+│   ├── check.test.js        # Check command tests
+│   └── *.test.js           # Other test files
+├── package.json
+├── deset.config.json       # Default configuration
+└── README.mdnabir/oas-deset)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A production-ready CLI tool that automates developer environment setup and comprehensive project health checks.
 
 ## Features
 
@@ -14,13 +41,13 @@ A production-ready CLI tool that automates developer environment setup and proje
 ## Installation
 
 ```bash
-npm install -g @oas/devset
-```
+npm install -g @oas/deset
+````
 
 Or run directly with npx:
 
 ```bash
-npx @oas/devset init
+npx @oas/deset init
 ```
 
 ## Commands
@@ -30,7 +57,7 @@ npx @oas/devset init
 Sets up your project with development tools and configurations.
 
 ```bash
-devset init [options]
+deset init [options]
 ```
 
 **Options:**
@@ -58,7 +85,7 @@ devset init [options]
 Performs various checks on your project to identify potential issues.
 
 ```bash
-devset check [options]
+deset check [options]
 ```
 
 **Options:**
@@ -100,7 +127,7 @@ When outdated packages are found and the CLI is running in interactive mode (def
 
 ## Configuration
 
-@oas/devset uses a `devenv.config.json` file for configuration. If this file doesn't exist, it will use sensible defaults.
+@oas/deset uses a `deset.config.json` file for configuration. If this file doesn't exist, it will use sensible defaults.
 
 ### Default Configuration
 
@@ -132,41 +159,41 @@ Configuration values are merged in this order (highest to lowest priority):
 
 ```bash
 # Initialize with default configuration
-npx @oas/devset init
+npx @oas/deset init
 
 # Initialize with only Prettier (disable other tools)
-npx @oas/devset init --no-eslint --no-husky --no-dependabot
+npx @oas/deset init --no-eslint --no-husky --no-dependabot
 
 # See what would be set up without making changes
-npx @oas/devset init --dry-run
+npx @oas/deset init --dry-run
 ```
 
 ### Project Health Checks
 
 ```bash
 # Run all health checks with interactive package updates
-npx @oas/devset check
+npx @oas/deset check
 
 # Run checks with JSON output (great for CI/CD)
-npx @oas/devset check --format json
+npx @oas/deset check --format json
 
 # Run checks without interactive prompts (for automated environments)
-npx @oas/devset check --no-interactive
+npx @oas/deset check --no-interactive
 
 # Check only changed files (useful in git workflows)
-npx @oas/devset check --changed-only
+npx @oas/deset check --changed-only
 
 # Skip stale package warnings
-npx @oas/devset check --no-stale-check
+npx @oas/deset check --no-stale-check
 ```
 
 ### Interactive Package Updates
 
-When running `devset check`, if outdated packages are found, the CLI will interactively guide you through updating them:
+When running `deset check`, if outdated packages are found, the CLI will interactively guide you through updating them:
 
 ```bash
 # Example interactive session
-npx @oas/devset check
+npx @oas/deset check
 
 # Output:
 # 📦 Outdated Packages:
@@ -194,11 +221,11 @@ npx @oas/devset check
 
 ### Stale Package Management
 
-When running `devset check`, stale packages are automatically analyzed and categorized:
+When running `deset check`, stale packages are automatically analyzed and categorized:
 
 ```bash
 # Example stale package analysis
-npx @oas/devset check
+npx @oas/deset check
 
 # Output:
 # ⏰ Stale Packages:
@@ -243,12 +270,12 @@ For use in continuous integration:
 ```yaml
 # GitHub Actions example
 - name: Run project health checks
-  run: npx @oas/devset check --format json --no-interactive
+  run: npx @oas/deset check --format json --no-interactive
 ```
 
 ## Automatic Configuration Updates
 
-When updating packages through the interactive mode, @oas/devset can automatically update your configuration files to industry standards:
+When updating packages through the interactive mode, @oas/deset can automatically update your configuration files to industry standards:
 
 ### ESLint Configuration
 
@@ -341,9 +368,9 @@ npm run lint:fix
 ## File Structure
 
 ```
-@oas/devset/
+@oas/deset/
 ├── bin/
-│   └── devset               # CLI entrypoint
+│   └── deset               # CLI entrypoint
 ├── src/
 │   ├── commands/
 │   │   ├── init.js          # Init command implementation
