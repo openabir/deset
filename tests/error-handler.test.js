@@ -188,12 +188,12 @@ describe('error-handler', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Need help?'),
         expect.anything(),
-        expect.stringContaining('devset test-command --help'),
+        expect.stringContaining('deset test-command --help'),
         expect.anything()
       );
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('Still stuck?'),
-        expect.stringContaining('https://github.com/openabir/oas-devset/issues')
+        expect.stringContaining('https://github.com/openabir/oas-deset/issues')
       );
     });
 

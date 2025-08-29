@@ -56,7 +56,7 @@ describe('Config Command', () => {
 
       await configCommand(options);
 
-      expect(fileExists).toHaveBeenCalledWith(expect.stringContaining('devenv.config.json'));
+      expect(fileExists).toHaveBeenCalledWith(expect.stringContaining('deset.config.json'));
       expect(askYesNo).toHaveBeenCalledWith(
         'Are you sure you want to reset the configuration to defaults?'
       );
@@ -83,10 +83,10 @@ describe('Config Command', () => {
       await configCommand(options);
 
       expect(consoleLogSpy).toHaveBeenCalledWith(
-        expect.stringContaining('🔧 @oas/devset Configuration Wizard')
+        expect.stringContaining('🔧 @oas/deset Configuration Wizard')
       );
       expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringContaining('devenv.config.json'),
+        expect.stringContaining('deset.config.json'),
         expect.any(String),
         'utf8'
       );
@@ -130,7 +130,7 @@ describe('Config Command', () => {
       await configCommand(options);
 
       expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringContaining('devenv.config.json'),
+        expect.stringContaining('deset.config.json'),
         expect.stringMatching(/"version":\s*"1\.0\.0"/),
         'utf8'
       );
@@ -201,7 +201,7 @@ describe('Config Command', () => {
 
       expect(logError).toHaveBeenCalledWith(testError, {
         suggestion: 'Make sure you have write permissions in the current directory',
-        command: 'ls -la devenv.config.json',
+        command: 'ls -la deset.config.json',
         docs: 'https://nodejs.org/api/fs.html#fs_file_system',
       });
       expect(processExitSpy).toHaveBeenCalledWith(1);
@@ -297,7 +297,7 @@ describe('Config Command', () => {
       await configCommand(options);
 
       expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringContaining('devenv.config.json'),
+        expect.stringContaining('deset.config.json'),
         expect.stringMatching(/"version":\s*"1\.0\.0"/),
         'utf8'
       );

@@ -9,7 +9,7 @@ import { askYesNo, askMultipleChoice, fileExists, logError, ProgressIndicator } 
  */
 export async function configCommand(options) {
   try {
-    console.log(chalk.blue.bold('\n🔧 @oas/devset Configuration Wizard\n'));
+    console.log(chalk.blue.bold('\n🔧 @oas/deset Configuration Wizard\n'));
     console.log('This wizard will help you set up a custom configuration for your project.\n');
 
     if (options.reset) {
@@ -18,12 +18,12 @@ export async function configCommand(options) {
     }
 
     // Check if config already exists
-    const configPath = path.join(process.cwd(), 'devenv.config.json');
+    const configPath = path.join(process.cwd(), 'deset.config.json');
     const configExists = await fileExists(configPath);
 
     if (configExists) {
       const overwrite = await askYesNo(
-        'A devenv.config.json file already exists. Do you want to overwrite it?'
+        'A deset.config.json file already exists. Do you want to overwrite it?'
       );
       if (!overwrite) {
         console.log(chalk.yellow('Configuration wizard cancelled.'));
@@ -43,17 +43,17 @@ export async function configCommand(options) {
     saveProgress.complete('Configuration saved');
 
     console.log(chalk.green('\n✓ Configuration wizard completed!'));
-    console.log(chalk.blue('📄 Configuration saved to:'), chalk.bold('devenv.config.json'));
+    console.log(chalk.blue('📄 Configuration saved to:'), chalk.bold('deset.config.json'));
     console.log(
       chalk.blue('🚀 You can now run:'),
-      chalk.bold('devset init'),
+      chalk.bold('deset init'),
       'or',
-      chalk.bold('devset check')
+      chalk.bold('deset check')
     );
   } catch (error) {
     logError(error, {
       suggestion: 'Make sure you have write permissions in the current directory',
-      command: 'ls -la devenv.config.json',
+      command: 'ls -la deset.config.json',
       docs: 'https://nodejs.org/api/fs.html#fs_file_system',
     });
     process.exit(1);
@@ -167,7 +167,7 @@ async function runConfigurationWizard() {
  * Reset configuration to defaults
  */
 async function resetConfiguration() {
-  const configPath = path.join(process.cwd(), 'devenv.config.json');
+  const configPath = path.join(process.cwd(), 'deset.config.json');
   const configExists = await fileExists(configPath);
 
   if (!configExists) {

@@ -73,7 +73,7 @@ const COMMAND_ERRORS = {
   config: {
     'Configuration file corrupted': {
       suggestion: 'Reset configuration to defaults.',
-      fix: 'devset config --reset',
+      fix: 'deset config --reset',
     },
     'Invalid JSON in config': {
       suggestion: 'Fix JSON syntax errors in configuration file.',
@@ -155,7 +155,7 @@ export function handleCommandError(error, context = 'command') {
     if (!pattern && !commandErrors) {
       logError(error, {
         suggestion: `An unexpected error occurred in ${context}. Please check the error details above.`,
-        docs: 'https://github.com/openabir/oas-devset/issues',
+        docs: 'https://github.com/openabir/oas-deset/issues',
       });
     }
   }
@@ -170,12 +170,12 @@ export function handleCommandError(error, context = 'command') {
   console.error(
     chalk.cyan('  Need help?'),
     'Run',
-    chalk.bold(`devset ${context} --help`),
+    chalk.bold(`deset ${context} --help`),
     'for usage information'
   );
   console.error(
     chalk.cyan('  Still stuck?'),
-    'Visit https://github.com/openabir/oas-devset/issues for support'
+    'Visit https://github.com/openabir/oas-deset/issues for support'
   );
 }
 
