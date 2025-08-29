@@ -42,6 +42,9 @@ web_modules/
 # Optional npm cache directory
 .npm
 
+
+.npmignore
+
 # Optional eslint cache
 .eslintcache
 
@@ -195,3 +198,4 @@ docs/generated/
 # Runtime directories
 tmp/
 temp/
+
