@@ -1,6 +1,7 @@
 # @oas/devset Project Instructions
 
 This is a Node.js CLI project that automates developer environment setup and project checks.
+
 ## Architecture Overview
 
 **Core Components:**
@@ -116,7 +117,6 @@ Add entries to the alternatives database in `utils.js` and update the categoriza
 ### Adding Configuration Options
 
 Update `DEFAULT_CONFIG` in `config.js` and add corresponding CLI flags with `--no-*` pattern in command definitions.
-
 
 ### Phase 1: Core UX Improvements (HIGH PRIORITY)
 
