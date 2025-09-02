@@ -60,6 +60,9 @@
     "ora": "^8.2.0"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.3",
+    "@babel/preset-env": "^7.28.3",
+    "babel-jest": "^30.1.1",
     "eslint": "^9.34.0",
     "eslint-config-prettier": "^10.1.8",
     "husky": "^9.1.7",
@@ -80,7 +83,19 @@
     "moduleNameMapper": {
       "^(\\.{1,2}/.*)\\.js$": "$1"
     },
-    "transform": {},
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(chalk|@jest)/)"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "mjs",
+      "cjs",
+      "json",
+      "node"
+    ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/**/*.test.js"
