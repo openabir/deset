@@ -73,6 +73,15 @@ web_modules/
 .env.production.local
 .env.local
 
+# Encryption and security keys
+*.key
+*.pem
+*.p12
+*.pfx
+.deset.key*
+secrets/
+credentials/
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache

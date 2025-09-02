@@ -53,13 +53,27 @@ export async function execSecure(command, args = [], options = {}) {
     throw new Error(`Invalid command arguments: ${error.message}`);
   }
 
-  // Set up options with security defaults
+  // Resolve Windows command executable without shell
+  let resolvedCommand = sanitizedCommand;
+  if (process.platform === 'win32') {
+    // On Windows, add .cmd extension for npm, node should work as-is
+    if (sanitizedCommand === 'npm') {
+      resolvedCommand = 'npm.cmd';
+    } else if (sanitizedCommand === 'yarn') {
+      resolvedCommand = 'yarn.cmd';
+    } else if (sanitizedCommand === 'pnpm') {
+      resolvedCommand = 'pnpm.cmd';
+    }
+    // node.exe and git.exe should work without modification
+  }
+
+  // For Windows, we need special handling for .cmd files
   const secureOptions = {
     timeout: options.timeout || DEFAULT_TIMEOUT,
     cwd: options.cwd || process.cwd(),
     silent: options.silent || false,
     stdio: ['ignore', 'pipe', 'pipe'],
-    shell: process.platform === 'win32', // Use shell on Windows for .cmd files
+    shell: process.platform === 'win32' && sanitizedCommand === 'npm', // Only for npm on Windows
     windowsHide: true, // Hide on Windows
     env: {
       ...process.env,
@@ -76,8 +90,9 @@ export async function execSecure(command, args = [], options = {}) {
     let outputSize = 0;
     let timedOut = false;
 
-    // Spawn the process
-    const child = spawn(sanitizedCommand, sanitizedArgs, secureOptions);
+    // Spawn the process - use original command for shell, resolved for direct exec
+    const commandToUse = secureOptions.shell ? sanitizedCommand : resolvedCommand;
+    const child = spawn(commandToUse, sanitizedArgs, secureOptions);
 
     // Set up timeout
     const timeoutId = setTimeout(() => {

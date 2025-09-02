@@ -10,8 +10,9 @@ import { fileExists } from '../utils.js';
 
 const ALGORITHM = 'aes-256-gcm';
 const KEY_LENGTH = 32; // 256 bits
-const IV_LENGTH = 16; // 128 bits
+const IV_LENGTH = 12; // 96 bits for GCM
 const TAG_LENGTH = 16; // 128 bits
+const SALT_LENGTH = 16; // 128 bits for key derivation
 
 /**
  * Secure Configuration Manager
@@ -46,25 +47,27 @@ export class SecureConfig {
       throw new Error('Encryption key not initialized');
     }
 
-    // Ensure key is the right length for AES-256
-    const key = this.encryptionKey.length === KEY_LENGTH 
-      ? this.encryptionKey 
-      : crypto.scryptSync(this.encryptionKey.toString(), 'salt', KEY_LENGTH);
-    
+    // Generate unique salt for key derivation
+    const salt = crypto.randomBytes(SALT_LENGTH);
+
+    // Always derive key consistently using scrypt
+    const key = crypto.scryptSync(this.encryptionKey.toString(), salt, KEY_LENGTH);
+
     const iv = crypto.randomBytes(IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
 
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
 
-    // For compatibility, create a dummy tag
-    const tag = crypto.createHash('sha256').update(encrypted).digest('hex').substring(0, 32);
+    // Get the authentication tag for GCM
+    const tag = cipher.getAuthTag();
 
-    // Combine IV, tag, and encrypted data
+    // Combine salt, IV, tag, and encrypted data
     return {
       encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
+      salt: salt.toString('hex'),
       algorithm: ALGORITHM,
     };
   }
@@ -77,18 +80,23 @@ export class SecureConfig {
       throw new Error('Encryption key not initialized');
     }
 
-    const { encrypted, iv, algorithm } = encryptedData;
+    const { encrypted, iv, tag, salt, algorithm } = encryptedData;
 
     if (algorithm && algorithm !== ALGORITHM) {
       throw new Error('Unsupported encryption algorithm');
     }
 
-    // Ensure key is the right length for AES-256
-    const key = this.encryptionKey.length === KEY_LENGTH 
-      ? this.encryptionKey 
-      : crypto.scryptSync(this.encryptionKey.toString(), 'salt', KEY_LENGTH);
+    // Always derive key consistently using the same salt
+    const keyBuffer = crypto.scryptSync(
+      this.encryptionKey.toString(),
+      Buffer.from(salt, 'hex'),
+      KEY_LENGTH
+    );
 
-    const decipher = crypto.createDecipheriv('aes-256-cbc', key, Buffer.from(iv, 'hex'));
+    const decipher = crypto.createDecipheriv(ALGORITHM, keyBuffer, Buffer.from(iv, 'hex'));
+
+    // Set auth tag for GCM verification
+    decipher.setAuthTag(Buffer.from(tag, 'hex'));
 
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
