@@ -50,12 +50,15 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
         run: npm run test:coverage
 
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
-        uses: codecov/codecov-action@v3
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
+      # NOTE: To enable Codecov integration, add CODECOV_TOKEN as a repository secret
+      # and uncomment the following step:
+      # - name: Upload coverage to Codecov
+      #   if: matrix.os == 'ubuntu-latest' && matrix.node-version == '20.x'
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: REPLACE_WITH_CODECOV_TOKEN_SECRET
+      #     files: ./coverage/lcov.info
+      #     fail_ci_if_error: false
 
   build:
     runs-on: ubuntu-latest
@@ -130,7 +133,9 @@ jobs:
           npm run test
           npm run lint
 
-      - name: Publish to NPM
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # NOTE: To enable NPM publishing, add NPM_TOKEN as a repository secret
+      # and uncomment the following step:
+      # - name: Publish to NPM
+      #   run: npm publish
+      #   env:
+      #     NODE_AUTH_TOKEN: REPLACE_WITH_NPM_TOKEN_SECRET

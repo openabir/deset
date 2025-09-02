@@ -37,6 +37,7 @@ A production-ready CLI tool that automates developer environment setup and compr
 - **Configurable**: Customize which features to enable/disable via configuration file or command-line flags
 - **Multiple Output Formats**: Support for both human-readable text and machine-readable JSON output
 - **Git Integration**: Check only changed files when working with git repositories
+- **🔒 Enterprise Security**: Comprehensive security architecture with input sanitization, command execution safety, and encrypted configuration storage
 
 ## Installation
 
@@ -124,6 +125,55 @@ When outdated packages are found and the CLI is running in interactive mode (def
 3. Update `package.json` with the latest versions
 4. Optionally install the updated packages automatically
 5. Update configuration files (ESLint, Jest, Prettier) to industry standards
+
+## Security
+
+@oas/deset implements enterprise-grade security features to protect your development environment:
+
+### 🛡️ Security Architecture
+
+- **Input Sanitization**: All user inputs and package names are validated and sanitized
+- **Command Execution Safety**: Secure command execution with argument validation and output limits
+- **HTTPS Enforcement**: All network requests use HTTPS with domain whitelisting
+- **Rate Limiting**: Built-in rate limiting to prevent abuse and DoS attacks
+- **Configuration Encryption**: Sensitive configuration data encrypted with AES-256-GCM
+- **Supply Chain Protection**: Package integrity verification and publisher trust scoring
+
+### 🔒 Security Features
+
+```bash
+# Run security audit with integrity checks
+npx @oas/deset check --security-audit
+
+# Initialize with encrypted configuration
+npx @oas/deset init --encrypt-config
+
+# Verify package integrity
+npx @oas/deset check --verify-packages
+```
+
+### Security Configuration
+
+```json
+{
+  "security": {
+    "rateLimiting": {
+      "maxRequestsPerMinute": 60,
+      "maxRequestsPerHour": 1000
+    },
+    "encryption": {
+      "enabled": true,
+      "algorithm": "aes-256-gcm"
+    },
+    "packageIntegrity": {
+      "checkEnabled": true,
+      "trustedPublishers": ["npm", "github"]
+    }
+  }
+}
+```
+
+For complete security documentation, see [SECURITY-IMPLEMENTATION.md](SECURITY-IMPLEMENTATION.md).
 
 ## Configuration
 
