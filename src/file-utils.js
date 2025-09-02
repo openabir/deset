@@ -46,7 +46,9 @@ export async function readPackageJson() {
     const content = await fs.readFile('package.json', 'utf-8');
     return JSON.parse(content);
   } catch {
-    throw new Error(`Could not read package.json. Make sure you are in a Node.js project directory.`);
+    throw new Error(
+      `Could not read package.json. Make sure you are in a Node.js project directory.`
+    );
   }
 }
 
