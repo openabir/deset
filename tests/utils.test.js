@@ -4,6 +4,31 @@
 
 import { jest } from '@jest/globals';
 
+jest.unstable_mockModule('../src/security/secure-http.js', () => ({
+  getPackageLastPublished: jest.fn(async (packageName) => {
+    if (packageName === 'old-package') {
+      return new Date('2019-01-01');
+    }
+    if (packageName === 'recent-package') {
+      return new Date('2023-01-01');
+    }
+    if (packageName === 'very-old') {
+      return new Date('2015-01-01');
+    }
+    return new Date();
+  }),
+  getDetailedPackageInfo: jest.fn(async (packageName) => ({
+    description: `Test description for ${packageName}`,
+    keywords: ['test'],
+    deprecated: false,
+    repository: `https://github.com/test/${packageName}`,
+    homepage: `https://test.com/${packageName}`,
+    license: 'MIT',
+    version: '1.0.0',
+    publishedAt: '2023-01-01T00:00:00.000Z',
+  })),
+}));
+
 const {
   log,
   logError,

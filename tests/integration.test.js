@@ -12,12 +12,21 @@ const CLI_PATH = path.join(ROOT_DIR, 'bin', 'deset');
 // Helper function to run CLI commands
 function runCLI(args = '', options = {}) {
   const command = `node "${CLI_PATH}" ${args}`;
-  return execSync(command, {
-    encoding: 'utf-8',
-    cwd: options.cwd || ROOT_DIR,
-    env: { ...process.env, NODE_OPTIONS: '--experimental-vm-modules' },
-    ...options,
-  });
+  try {
+    return execSync(command, {
+      encoding: 'utf-8',
+      cwd: options.cwd || ROOT_DIR,
+      env: {
+        ...process.env,
+        NODE_OPTIONS: '--experimental-vm-modules',
+        PATH: `${process.env.PATH};${path.join(ROOT_DIR, 'node_modules', '.bin')}`,
+      },
+      ...options,
+    });
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
 
 // Helper function to create a temporary test directory
