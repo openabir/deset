@@ -1,5 +1,13 @@
 import chalk from 'chalk';
 import { logError } from './utils.js';
+import {
+  handleSecureError,
+  SecurityError,
+  ValidationError,
+} from './security/secure-error-handler.js';
+
+// Re-export security error classes for backward compatibility
+export { SecurityError, ValidationError };
 
 // Error types and their handling
 export const ERROR_TYPES = {
@@ -88,6 +96,14 @@ const COMMAND_ERRORS = {
  * @param {string} context - Context where error occurred
  */
 export function handleCommandError(error, context = 'command') {
+  // Use secure error handling for security-related errors
+  if (error instanceof SecurityError || error instanceof ValidationError) {
+    const result = handleSecureError(error, { context });
+    if (result.handled) {
+      return;
+    }
+  }
+
   const errorCode = error.code || error.name || 'UNKNOWN_ERROR';
   const errorMessage = error.message || 'An unknown error occurred';
 

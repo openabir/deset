@@ -1,5 +1,3 @@
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import chalk from 'chalk';
 import { loadConfig, mergeConfigWithFlags } from '../config.js';
 import {
@@ -18,8 +16,8 @@ import {
   logError,
   ProgressIndicator,
 } from '../utils.js';
-
-const execAsync = promisify(exec);
+import { execNpm } from '../security/secure-exec.js';
+import { getPackageLastPublished } from '../security/secure-http.js';
 
 /**
  * Run various project health checks
@@ -199,17 +197,18 @@ export async function checkCommand(options) {
         docs: 'https://docs.npmjs.com/downloading-and-installing-node-js-and-npm',
       });
     }
+    
     process.exit(1);
   }
 }
 
 /**
- * Run npm audit check
+ * Run npm audit check securely
  * @returns {Promise<Object>} Audit results
  */
 async function runAuditCheck() {
   try {
-    const { stdout } = await execAsync('npm audit --json');
+    const { stdout } = await execNpm(['audit', '--json']);
     const auditData = JSON.parse(stdout);
 
     const vulnerabilities = auditData.vulnerabilities || {};
@@ -241,48 +240,53 @@ async function runAuditCheck() {
   } catch (error) {
     // npm audit returns exit code 1 when vulnerabilities are found
     if (error.stdout) {
-      const auditData = JSON.parse(error.stdout);
-      const vulnerabilities = auditData.vulnerabilities || {};
-      const summary = {
-        critical: 0,
-        high: 0,
-        moderate: 0,
-        low: 0,
-        info: 0,
-        total: 0,
-        warnings: 0,
-      };
+      try {
+        const auditData = JSON.parse(error.stdout);
+        const vulnerabilities = auditData.vulnerabilities || {};
+        const summary = {
+          critical: 0,
+          high: 0,
+          moderate: 0,
+          low: 0,
+          info: 0,
+          total: 0,
+          warnings: 0,
+        };
 
-      Object.values(vulnerabilities).forEach((vuln) => {
-        if (vuln.severity) {
-          summary[vuln.severity] = (summary[vuln.severity] || 0) + 1;
-          summary.total++;
-          if (['critical', 'high'].includes(vuln.severity)) {
-            summary.warnings++;
+        Object.values(vulnerabilities).forEach((vuln) => {
+          if (vuln.severity) {
+            summary[vuln.severity] = (summary[vuln.severity] || 0) + 1;
+            summary.total++;
+            if (['critical', 'high'].includes(vuln.severity)) {
+              summary.warnings++;
+            }
           }
-        }
-      });
+        });
 
-      return {
-        ...summary,
-        vulnerabilities: Object.keys(vulnerabilities).map((name) => ({
-          name,
-          severity: vulnerabilities[name].severity,
-          via: vulnerabilities[name].via,
-        })),
-      };
+        return {
+          ...summary,
+          vulnerabilities: Object.keys(vulnerabilities).map((name) => ({
+            name,
+            severity: vulnerabilities[name].severity,
+            via: vulnerabilities[name].via,
+          })),
+        };
+      } catch {
+        // Fallback if JSON parsing fails
+        throw new Error(`Audit check failed: ${error.message}`);
+      }
     }
     throw error;
   }
 }
 
 /**
- * Run npm outdated check
+ * Run npm outdated check securely
  * @returns {Promise<Object>} Outdated packages results
  */
 async function runOutdatedCheck() {
   try {
-    const { stdout } = await execAsync('npm outdated --json');
+    const { stdout } = await execNpm(['outdated', '--json']);
     const outdatedData = JSON.parse(stdout || '{}');
 
     const packages = Object.keys(outdatedData).map((name) => ({
@@ -300,19 +304,27 @@ async function runOutdatedCheck() {
   } catch (error) {
     // npm outdated returns exit code 1 when outdated packages are found
     if (error.stdout) {
-      const outdatedData = JSON.parse(error.stdout || '{}');
-      const packages = Object.keys(outdatedData).map((name) => ({
-        name,
-        current: outdatedData[name].current,
-        wanted: outdatedData[name].wanted,
-        latest: outdatedData[name].latest,
-        location: outdatedData[name].location,
-      }));
+      try {
+        const outdatedData = JSON.parse(error.stdout || '{}');
+        const packages = Object.keys(outdatedData).map((name) => ({
+          name,
+          current: outdatedData[name].current,
+          wanted: outdatedData[name].wanted,
+          latest: outdatedData[name].latest,
+          location: outdatedData[name].location,
+        }));
 
-      return {
-        count: packages.length,
-        packages,
-      };
+        return {
+          count: packages.length,
+          packages,
+        };
+      } catch {
+        // If JSON parsing fails, return empty result
+        return {
+          count: 0,
+          packages: [],
+        };
+      }
     }
 
     return {
@@ -374,29 +386,6 @@ async function runStaleCheck() {
     errors,
     totalChecked: Object.keys(dependencies).length,
   };
-}
-
-/**
- * Get the last published date of a package from npm registry
- * @param {string} packageName - Name of the package
- * @returns {Promise<Date>} Last published date
- */
-async function getPackageLastPublished(packageName) {
-  try {
-    const response = await fetch(`https://registry.npmjs.org/${packageName}`);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    const versions = Object.keys(data.versions);
-    const latestVersion = versions[versions.length - 1];
-    const publishTime = data.time[latestVersion];
-
-    return new Date(publishTime);
-  } catch (error) {
-    throw new Error(`Could not fetch package info: ${error.message}`);
-  }
 }
 
 /**

@@ -1,11 +1,10 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { exec } from 'child_process';
-import { promisify } from 'util';
 import { createInterface } from 'readline';
 import chalk from 'chalk';
-
-const execAsync = promisify(exec);
+import { execNpm, execGit } from './security/secure-exec.js';
+import { sanitizeFilePath } from './security/input-sanitizer.js';
+import { getDetailedPackageInfo } from './security/secure-http.js';
 
 /**
  * Check if a file exists
@@ -22,25 +21,27 @@ export async function fileExists(filePath) {
 }
 
 /**
- * Write a JSON file with pretty formatting
- * @param {string} filePath - Path to write the file
- * @param {Object} data - Data to write
- */
-export async function writeJsonFile(filePath, data) {
-  const dir = path.dirname(filePath);
-  await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2) + '\n');
-}
-
-/**
- * Write a text file
+ * Write a text file with path validation
  * @param {string} filePath - Path to write the file
  * @param {string} content - Content to write
  */
 export async function writeTextFile(filePath, content) {
-  const dir = path.dirname(filePath);
+  const safePath = sanitizeFilePath(filePath);
+  const dir = path.dirname(safePath);
   await fs.mkdir(dir, { recursive: true });
-  await fs.writeFile(filePath, content);
+  await fs.writeFile(safePath, content);
+}
+
+/**
+ * Write a JSON file with pretty formatting and path validation
+ * @param {string} filePath - Path to write the file
+ * @param {Object} data - Data to write
+ */
+export async function writeJsonFile(filePath, data) {
+  const safePath = sanitizeFilePath(filePath);
+  const dir = path.dirname(safePath);
+  await fs.mkdir(dir, { recursive: true });
+  await fs.writeFile(safePath, JSON.stringify(data, null, 2) + '\n');
 }
 
 /**
@@ -69,25 +70,34 @@ export async function writePackageJson(packageData) {
 }
 
 /**
- * Run a shell command and return the result
+ * Run a shell command securely and return the result
  * @param {string} command - Command to execute
+ * @param {string[]} args - Command arguments
  * @returns {Promise<{stdout: string, stderr: string}>} Command result
  */
-export async function runCommand(command) {
+export async function runCommand(command, args = []) {
   try {
-    return await execAsync(command);
+    if (command === 'npm') {
+      const result = await execNpm(args);
+      return { stdout: result.stdout, stderr: result.stderr };
+    } else if (command === 'git') {
+      const result = await execGit(args);
+      return { stdout: result.stdout, stderr: result.stderr };
+    } else {
+      throw new Error(`Command not supported: ${command}`);
+    }
   } catch (error) {
-    throw new Error(`Command failed: ${command}\n${error.message}`);
+    throw new Error(`Command failed: ${command} ${args.join(' ')}\n${error.message}`);
   }
 }
 
 /**
- * Get list of changed files via git diff
+ * Get list of changed files via git diff securely
  * @returns {Promise<string[]>} Array of changed file paths
  */
 export async function getChangedFiles() {
   try {
-    const { stdout } = await execAsync('git diff --name-only HEAD');
+    const { stdout } = await execGit(['diff', '--name-only', 'HEAD']);
     return stdout
       .trim()
       .split('\n')
@@ -99,12 +109,12 @@ export async function getChangedFiles() {
 }
 
 /**
- * Check if we're in a git repository
+ * Check if we're in a git repository securely
  * @returns {Promise<boolean>} True if in a git repo
  */
 export async function isGitRepo() {
   try {
-    await execAsync('git rev-parse --git-dir');
+    await execGit(['rev-parse', '--git-dir']);
     return true;
   } catch {
     return false;
@@ -350,13 +360,13 @@ export async function updatePackageVersions(packages, outdatedData) {
 }
 
 /**
- * Install updated packages
+ * Install updated packages securely
  * @returns {Promise<void>}
  */
 export async function installUpdatedPackages() {
   try {
     log('info', 'Installing updated packages...');
-    const { stdout } = await execAsync('npm install');
+    const { stdout } = await execNpm(['install']);
     log('success', 'Packages installed successfully');
     if (stdout.trim()) {
       console.log(chalk.gray(stdout));
@@ -674,41 +684,6 @@ export async function analyzeStalePackages(stalePackages) {
 }
 
 /**
- * Get detailed package information from npm registry
- * @param {string} packageName - Name of the package
- * @returns {Promise<Object>} Package details
- */
-async function getDetailedPackageInfo(packageName) {
-  try {
-    const response = await fetch(`https://registry.npmjs.org/${packageName}`);
-    if (!response.ok) {
-      return { description: 'Unknown package', keywords: [], deprecated: false };
-    }
-
-    const data = await response.json();
-    const latestVersion = data['dist-tags']?.latest;
-    const versionInfo = data.versions?.[latestVersion] || {};
-
-    return {
-      description: data.description || versionInfo.description || 'No description available',
-      keywords: data.keywords || versionInfo.keywords || [],
-      deprecated: versionInfo.deprecated || false,
-      repository: data.repository?.url || versionInfo.repository?.url,
-      homepage: data.homepage || versionInfo.homepage,
-      license: data.license || versionInfo.license,
-      weeklyDownloads: 'Unknown',
-    };
-  } catch (error) {
-    return {
-      description: 'Error fetching package info',
-      keywords: [],
-      deprecated: false,
-      error: error.message,
-    };
-  }
-}
-
-/**
  * Check if a package is generally safe to keep even when stale
  * @param {string} packageName - Name of the package
  * @returns {boolean} True if package is safe to keep
@@ -773,7 +748,7 @@ export async function selectPackageAlternative(packageName, alternatives) {
 }
 
 /**
- * Replace stale package with alternative
+ * Replace stale package with alternative securely
  * @param {string} oldPackage - Name of package to replace
  * @param {string} newPackage - Name of replacement package
  * @param {boolean} isDev - Whether package is in devDependencies
@@ -784,13 +759,14 @@ export async function replaceStalePackage(oldPackage, newPackage, isDev = false)
     log('info', `Replacing ${oldPackage} with ${newPackage}...`);
 
     // Remove old package
-    const removeCmd = `npm uninstall ${oldPackage}`;
-    await execAsync(removeCmd);
+    await execNpm(['uninstall', oldPackage]);
     log('success', `Removed ${oldPackage}`);
 
     // Install new package
-    const installCmd = `npm install ${isDev ? '--save-dev' : '--save'} ${newPackage}`;
-    await execAsync(installCmd);
+    const installArgs = isDev
+      ? ['install', '--save-dev', newPackage]
+      : ['install', '--save', newPackage];
+    await execNpm(installArgs);
     log('success', `Installed ${newPackage}`);
 
     // Update package.json to remove any remaining references
